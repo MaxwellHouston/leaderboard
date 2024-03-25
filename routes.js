@@ -3,19 +3,16 @@ const scoresRouter = require('express').Router();
 
 //GET all scores
 scoresRouter.get('/scores', async (req, res) => {
-    const scores = [];
     await client.connect();
-    for await (const memberWithScore of client.zScanIterator('sortedList')) {
-        scores.push(memberWithScore);
-      }
+    const scores = await client.zRangeWithScores('sortedList', 0, -1);
     await client.quit(); 
-    res.json(scores)
+    return res.json(scores);
 })
 //GET top x scores
 scoresRouter.get('/scores/:limit', async (req, res) => {
     const limit = Number(req.params.limit) - 1;
-    if(typeof limit !== 'number'){
-        return
+    if(Number.isNaN(limit)){
+        return res.status(400).json('Invalid list limit');
     }
     await client.connect();
     const scores = await client.zRangeWithScores('sortedList', 0, limit);
