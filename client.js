@@ -1,17 +1,18 @@
-const {createClient} = require('redis');
+const { createClient } = require('redis');
 const client = createClient();
-client.on('error', err => console.log('Redis Client Error', err));
+client.on('error', (err) => console.log('Redis Client Error', err));
 
-const useClient = async () => {
-    await client.connect();
-    const scores = await client.zRangeWithScores('sortedList', 0, -1)
-    console.log(scores);
-    // for await (const memberWithScore of client.zScanIterator('sortedList')) {
-    //     console.log(memberWithScore);
-    //   }
-    await client.quit();
-}
-
-useClient();
-
-module.exports = client;
+const startConnection = async (req, res, next) => {
+	console.log('Opening Redis client connection');
+	await client.connect();
+	next();
+};
+const endConnection = async (req, res, next) => {
+	console.log('Closing Redis client connection');
+	console.log(client.isOpen);
+	await client.quit();
+	console.log(client.isOpen);
+};
+exports.client = client;
+exports.startConnection = startConnection;
+exports.endConnection = endConnection;
